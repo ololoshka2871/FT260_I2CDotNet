@@ -1,8 +1,6 @@
 using FT260_I2CDotNet;
-using HidSharp;
 using NUnit.Framework;
 using System.Linq;
-using System.Threading;
 
 namespace Tests
 {

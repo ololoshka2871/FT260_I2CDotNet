@@ -1,5 +1,6 @@
 ﻿using HidSharp;
 using System;
+using System.Threading;
 
 namespace FT260_I2CDotNet
 {
@@ -13,9 +14,12 @@ namespace FT260_I2CDotNet
 		public const int I2C_AddressMin = 0;
 
 		private readonly HidDevice FT260Device;
+		private readonly RequestBuilder RequestBuilder;
 		private HidStream Stream = null;
 
 		#endregion Fields
+
+		public uint Timeout_ms { get; set; } = 10;
 
 		#region Methods
 
@@ -29,26 +33,55 @@ namespace FT260_I2CDotNet
 
 		public void Dispose() => Close();
 
-		/*
+		private I2CStatus GetI2CStatus()
+		{
+			var req = RequestBuilder.BuildI2CStatusRequest();
+			Stream.GetFeature(req);
+
+			return Deserialiser.ReportToStructure<I2CStatus>(req);
+		}
+
+		private void WaitBusReady()
+		{
+			I2CStatus status = default(I2CStatus);
+			for (int ms = 0; ms < Timeout_ms; ++ms)
+			{
+				status = GetI2CStatus();
+				if (status.Error || status.Arbitration)
+				{
+					I2C_Reset();
+				}
+				else if (status.IDLE && !status.BusBusy)
+				{
+					return;
+				}
+				Thread.Sleep(1);
+			}
+
+			throw new BusNotReadyException(Timeout_ms)
+			{
+				Arbitration = status.Arbitration,
+				BusBusy = status.BusBusy,
+				Busy = status.BusBusy,
+				Error = status.Error
+			};
+		}
+
 		/// <summary>
 		/// Use the single byte write style to get an ack bit from writing to an address with no commands.
 		/// </summary>
 		/// <returns>true, is ACK found</returns>
 		public bool I2C_Detect(int i2c_addr)
 		{
-			var task = FT260Device.WriteAsync(new byte[] { 0 });
-			try
-			{
-				task.GetAwaiter().GetResult();
-			}
-			catch (Exception ex)
-			{
-				throw new WriteException(ex);
-			}
+			WaitBusReady();
 
 			return false;
 		}
-		*/
+
+		/// <summary>
+		/// Reset I2C module
+		/// </summary>
+		public void I2C_Reset() => Stream.SetFeature(RequestBuilder.BuildI2CReset());
 
 		/// <summary>
 		/// Set the i2c speed desired
@@ -75,20 +108,18 @@ namespace FT260_I2CDotNet
 			return true;
 		}
 
+		private static bool IsI2CEnabled(byte[] state) => state[5] == 1;
+
 		private void EnableI2C()
 		{
-			var state = new byte[FT260Device.GetMaxFeatureReportLength()];
-			state[0] = RequestBuilder.ControlReportID;
+			var state = RequestBuilder.BuildGetStateRequest();
 
 			Stream.GetFeature(state);
-
 			if (!IsI2CEnabled(state))
 			{
 				Stream.SetFeature(RequestBuilder.BuildEnableI2C());
 			}
 		}
-
-		private bool IsI2CEnabled(byte[] state) => state[5] == 1;
 
 		#endregion Methods
 
@@ -97,6 +128,10 @@ namespace FT260_I2CDotNet
 		public FT260(HidDevice device)
 		{
 			FT260Device = device;
+			RequestBuilder = new RequestBuilder()
+			{
+				GetMaxFeatureReportLength = FT260Device.GetMaxFeatureReportLength()
+			};
 		}
 
 		public FT260() : this(DEFAULT_VID, DEFAULT_PID)
@@ -109,6 +144,10 @@ namespace FT260_I2CDotNet
 			{
 				throw new DeviceNotFoundException(vid, pid);
 			}
+			RequestBuilder = new RequestBuilder()
+			{
+				GetMaxFeatureReportLength = FT260Device.GetMaxFeatureReportLength()
+			};
 		}
 
 		#endregion Constructors

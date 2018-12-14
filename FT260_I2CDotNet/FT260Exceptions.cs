@@ -2,42 +2,29 @@
 
 namespace FT260_I2CDotNet
 {
-	public class CH341Exception : Exception
+	public class BusNotReadyException : FT260Exception
 	{
 		#region Constructors
 
-		public CH341Exception() : base()
+		public BusNotReadyException(uint waitingTimeout) : base("Bas not ready")
 		{
-		}
-
-		public CH341Exception(string message) : base(message)
-		{
-		}
-
-		#endregion Constructors
-	}
-	/*
-	public class CommandException : WriteException
-	{
-		#region Constructors
-
-		public CommandException(ErrorCode code) : base(code)
-		{
+			WaitingTimeout = waitingTimeout;
 		}
 
 		#endregion Constructors
 
-		#region Methods
+		#region Properties
 
-		public override string ToString()
-		{
-			return string.Format("Write Command exception with code {0}", Code.ToString("D"));
-		}
+		public bool Arbitration { get; set; }
+		public bool BusBusy { get; set; }
+		public bool Busy { get; set; }
+		public bool Error { get; set; }
+		public uint WaitingTimeout { get; private set; }
 
-		#endregion Methods
+		#endregion Properties
 	}
-	*/
-	public class DeviceConfigurationsIncorrect : CH341Exception
+
+	public class DeviceConfigurationsIncorrect : FT260Exception
 	{
 		#region Constructors
 
@@ -48,7 +35,7 @@ namespace FT260_I2CDotNet
 		#endregion Constructors
 	}
 
-	public class DeviceNotFoundException : CH341Exception
+	public class DeviceNotFoundException : FT260Exception
 	{
 		#region Fields
 
@@ -81,6 +68,42 @@ namespace FT260_I2CDotNet
 		#endregion Methods
 	}
 
+	public class FT260Exception : Exception
+	{
+		#region Constructors
+
+		public FT260Exception() : base()
+		{
+		}
+
+		public FT260Exception(string message) : base(message)
+		{
+		}
+
+		#endregion Constructors
+	}
+
+	/*
+	public class CommandException : WriteException
+	{
+		#region Constructors
+
+		public CommandException(ErrorCode code) : base(code)
+		{
+		}
+
+		#endregion Constructors
+
+		#region Methods
+
+		public override string ToString()
+		{
+			return string.Format("Write Command exception with code {0}", Code.ToString("D"));
+		}
+
+		#endregion Methods
+	}
+	*/
 	/*
 	public class ReadException : CH341Exception
 	{
@@ -109,7 +132,8 @@ namespace FT260_I2CDotNet
 		#endregion Methods
 	}
 	*/
-	public class WriteException : CH341Exception
+
+	public class WriteException : FT260Exception
 	{
 		#region Constructors
 

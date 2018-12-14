@@ -1,10 +1,11 @@
 ﻿namespace FT260_I2CDotNet
 {
-	internal static class RequestBuilder
+	internal class RequestBuilder
 	{
 		#region ReportIDs
 
-		internal const byte ControlReportID = 0xA1;
+		private const byte ControlReportID = 0xA1;
+		private const byte I2CStatusReportID = 0xC0;
 
 		#endregion ReportIDs
 
@@ -35,15 +36,32 @@
 
 		#endregion Commands
 
+		#region Properties
+
+		public int GetMaxFeatureReportLength { get; set; }
+
+		#endregion Properties
+
 		#region Methods
 
-		public static byte[] BuildEnableI2C(bool enable = true)
+		public byte[] BuildEnableI2C(bool enable = true)
 			=> new byte[] { ControlReportID, SetI2CMode, enable ? (byte)1 : (byte)0 };
 
-		public static byte[] BuildI2CReset() => new byte[] { ControlReportID, I2CReset };
+		public byte[] BuildGetStateRequest() => PrepareFeatureRequest(ControlReportID);
 
-		public static byte[] BuildI2CSpeedRequest(uint speed_khz)
+		public byte[] BuildI2CReset() => new byte[] { ControlReportID, I2CReset };
+
+		public byte[] BuildI2CSpeedRequest(uint speed_khz)
 			=> new byte[] { ControlReportID, SetI2CClockSpeed, (byte)(speed_khz >> 8), (byte)(speed_khz & 0xff) };
+
+		public byte[] BuildI2CStatusRequest() => PrepareFeatureRequest(I2CStatusReportID);
+
+		private byte[] PrepareFeatureRequest(byte ReportID)
+		{
+			var report = new byte[GetMaxFeatureReportLength];
+			report[0] = ReportID;
+			return report;
+		}
 
 		#endregion Methods
 	}
