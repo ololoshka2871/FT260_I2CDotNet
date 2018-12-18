@@ -34,6 +34,7 @@ namespace FT260_I2CDotNet
 			if (Stream != null)
 			{
 				Stream.Close();
+				Stream = null;
 			}
 		}
 
@@ -60,28 +61,16 @@ namespace FT260_I2CDotNet
 		/// <summary>
 		/// Reset I2C module
 		/// </summary>
-		public void I2C_Reset() => Stream.SetFeature(RequestBuilder.BuildI2CReset());
-
-		private void FlistRead()
+		public void I2C_Reset()
 		{
-			var readTimeout = Stream.ReadTimeout;
-			Stream.ReadTimeout = 2;
-			try
-			{
-				Stream.Read();
-			}
-			catch (TimeoutException)
-			{
-				Stream.ReadTimeout = readTimeout;
-			}
+			Stream.SetFeature(RequestBuilder.BuildI2CReset());
+			FlistRead();
 		}
 
 		public void Read(int i2c_addr, out byte[] data, int size, bool RepStart = true, bool Stop = true)
 		{
 			data = new byte[size];
 			int transmitted = 0;
-
-			FlistRead();
 
 			while (transmitted != size)
 			{
@@ -143,7 +132,11 @@ namespace FT260_I2CDotNet
 			var data_size = v.Length;
 			int transmitted = 0;
 
-			WaitBusReady();
+			if (Start)
+			{
+				WaitBusReady();
+			}
+
 			while (transmitted != data_size)
 			{
 				var this_transaction_size = Math.Min(data_size - transmitted, MaxTransactionPyload);
@@ -196,6 +189,20 @@ namespace FT260_I2CDotNet
 				Stream.SetFeature(RequestBuilder.BuildEnableI2C());
 			}
 			SetSpeed();
+		}
+
+		private void FlistRead()
+		{
+			var readTimeout = Stream.ReadTimeout;
+			Stream.ReadTimeout = 2;
+			try
+			{
+				Stream.Read();
+			}
+			catch (TimeoutException)
+			{
+				Stream.ReadTimeout = readTimeout;
+			}
 		}
 
 		private I2CStatus GetI2CStatus()

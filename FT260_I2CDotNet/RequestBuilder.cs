@@ -70,7 +70,7 @@ namespace FT260_I2CDotNet
 			return enable_request;
 		}
 
-		public byte[] BuildReadRequest(int i2c_addr, I2CConditions condition, int this_transaction_size) 
+		public byte[] BuildReadRequest(int i2c_addr, I2CConditions condition, int this_transaction_size)
 			=> new byte[] { I2CReadRequest, (byte)i2c_addr, (byte)condition, (byte)this_transaction_size };
 
 		public byte[] BuildWriteRequest(int i2c_addr, I2CConditions condition, byte[] v, int offset, int size)
@@ -84,7 +84,7 @@ namespace FT260_I2CDotNet
 			return result;
 		}
 
-		public void BuildWriteRequest(int i2c_addr, I2CConditions condition, byte[] v) 
+		public void BuildWriteRequest(int i2c_addr, I2CConditions condition, byte[] v)
 			=> BuildWriteRequest(i2c_addr, condition, v, 0, v.Length);
 
 		public byte[] BuildGetStateRequest() => PrepareFeatureRequest(ControlReportID);
