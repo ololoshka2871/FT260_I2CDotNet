@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28010.2026
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FT260_I2CDotNet", "FT260_I2CDotNet\FT260_I2CDotNet.csproj", "{1A2A5581-C0DE-409B-B9A3-00A84EDE629E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FT260_I2CDotNet", "FT260_I2CDotNet\FT260_I2CDotNet.csproj", "{1A2A5581-C0DE-409B-B9A3-00A84EDE629E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "Tests\Tests.csproj", "{8515517C-2114-4E4C-9624-0567E0B3FCC7}"
 EndProject

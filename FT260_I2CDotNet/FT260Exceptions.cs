@@ -6,7 +6,8 @@ namespace FT260_I2CDotNet
 	{
 		#region Constructors
 
-		public BusNotReadyException(uint waitingTimeout) : base("Bas not ready")
+		public BusNotReadyException(uint waitingTimeout)
+			: base("Bas not ready")
 		{
 			WaitingTimeout = waitingTimeout;
 		}
@@ -22,6 +23,15 @@ namespace FT260_I2CDotNet
 		public uint WaitingTimeout { get; private set; }
 
 		#endregion Properties
+
+		#region Methods
+
+		public override string ToString()
+		{
+			return $"Status:\n\tBusy={Busy}\n\tError={Error}\n\tArbitration={Arbitration}\n\tBusBusy={BusBusy}";
+		}
+
+		#endregion Methods
 	}
 
 	public class DeviceConfigurationsIncorrect : FT260Exception
@@ -83,62 +93,35 @@ namespace FT260_I2CDotNet
 		#endregion Constructors
 	}
 
-	/*
-	public class CommandException : WriteException
+	public class ReadException : FT260Exception
 	{
 		#region Constructors
 
-		public CommandException(ErrorCode code) : base(code)
-		{
-		}
+		public ReadException(int ExpectedSize, int ActualSize)
+			: base($"Read size unexpected: Requested={ExpectedSize}, Readed={ActualSize}") { }
 
 		#endregion Constructors
-
-		#region Methods
-
-		public override string ToString()
-		{
-			return string.Format("Write Command exception with code {0}", Code.ToString("D"));
-		}
-
-		#endregion Methods
 	}
-	*/
-	/*
-	public class ReadException : CH341Exception
+
+	public class TransactionException : FT260Exception
 	{
+		#region Fields
+
+		public readonly bool ANAK;
+		public readonly bool Arbitration;
+		public readonly bool BusBusy;
+		public readonly bool DNAK;
+
+		#endregion Fields
+
 		#region Constructors
 
-		public ReadException(ErrorCode code) : base()
+		internal TransactionException(I2CStatus status) : base()
 		{
-			this.Code = code;
-		}
-
-		#endregion Constructors
-
-		#region Properties
-
-		public ErrorCode Code { get; }
-
-		#endregion Properties
-
-		#region Methods
-
-		public override string ToString()
-		{
-			return string.Format("I2C Read exception with code {0}", Code.ToString("D"));
-		}
-
-		#endregion Methods
-	}
-	*/
-
-	public class WriteException : FT260Exception
-	{
-		#region Constructors
-
-		public WriteException(Exception innerException) : base(innerException.Message)
-		{
+			ANAK = status.ANAK;
+			DNAK = status.DNAK;
+			Arbitration = status.Arbitration;
+			BusBusy = status.BusBusy;
 		}
 
 		#endregion Constructors

@@ -6,6 +6,7 @@ namespace FT260_I2CDotNet
 	internal struct I2CStatus
 	{
 		#region Fields
+
 		/// <summary>
 		/// Bitfield
 		/// </summary>
@@ -14,7 +15,8 @@ namespace FT260_I2CDotNet
 		/// <summary>
 		/// The speed of I2C transmission. It ranges from 60K bps to 3400K bps
 		/// </summary>
-		public ushort I2CSpeed;
+		//[MarshalAs(UnmanagedType.U2, )]
+		public ushort I2CSpeedraw;
 
 		/// <summary>
 		/// Reserved
@@ -59,6 +61,11 @@ namespace FT260_I2CDotNet
 		/// Bus busy
 		/// </summary>
 		public bool BusBusy => (I2CBusStatus & (1 << 6)) != 0;
+
+		/// <summary>
+		/// I2C speed value
+		/// </summary>
+		public ushort I2CSpeed => (ushort)((I2CSpeedraw >> 8) | (I2CSpeedraw << 8));
 
 		#endregion Properties
 	}

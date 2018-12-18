@@ -8,10 +8,10 @@ namespace FT260_I2CDotNet
 	{
 		#region Methods
 
-		public static IList<HidDevice> Enumerate() 
+		public static IList<HidDevice> Enumerate()
 			=> Enumerate(FT260.DEFAULT_VID, FT260.DEFAULT_PID);
 
-		public static IList<HidDevice> Enumerate(int vid, int pid) 
+		public static IList<HidDevice> Enumerate(int vid, int pid)
 			=> DeviceList.Local.GetHidDevices(vid, pid).ToList();
 
 		#endregion Methods

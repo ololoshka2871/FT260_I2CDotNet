@@ -1,4 +1,6 @@
-﻿namespace FT260_I2CDotNet
+﻿using System;
+
+namespace FT260_I2CDotNet
 {
 	internal class RequestBuilder
 	{
@@ -7,7 +9,23 @@
 		private const byte ControlReportID = 0xA1;
 		private const byte I2CStatusReportID = 0xC0;
 
+		private const byte I2CReadRequest = 0xC2;
+		private const byte I2CWriteRequest = 0xD0;
+
 		#endregion ReportIDs
+
+		#region i2cConditions
+
+		public enum I2CConditions : byte
+		{
+			None = 0,
+			START = 2,
+			Repeated_START = 3,
+			STOP = 4,
+			START_AND_STOP = 6,
+		}
+
+		#endregion i2cConditions
 
 		#region Commands
 
@@ -45,14 +63,50 @@
 		#region Methods
 
 		public byte[] BuildEnableI2C(bool enable = true)
-			=> new byte[] { ControlReportID, SetI2CMode, enable ? (byte)1 : (byte)0 };
+		{
+			var enable_request = PrepareFeatureRequest(ControlReportID);
+			enable_request[1] = SetI2CMode;
+			enable_request[2] = enable ? (byte)1 : (byte)0;
+			return enable_request;
+		}
+
+		public byte[] BuildReadRequest(int i2c_addr, I2CConditions condition, int this_transaction_size) 
+			=> new byte[] { I2CReadRequest, (byte)i2c_addr, (byte)condition, (byte)this_transaction_size };
+
+		public byte[] BuildWriteRequest(int i2c_addr, I2CConditions condition, byte[] v, int offset, int size)
+		{
+			var result = new byte[4 + size];
+			result[0] = (byte)(I2CWriteRequest + (size / 4));
+			result[1] = (byte)i2c_addr;
+			result[2] = (byte)condition;
+			result[3] = (byte)size;
+			Buffer.BlockCopy(v, offset, result, 4, size);
+			return result;
+		}
+
+		public void BuildWriteRequest(int i2c_addr, I2CConditions condition, byte[] v) 
+			=> BuildWriteRequest(i2c_addr, condition, v, 0, v.Length);
 
 		public byte[] BuildGetStateRequest() => PrepareFeatureRequest(ControlReportID);
 
-		public byte[] BuildI2CReset() => new byte[] { ControlReportID, I2CReset };
+		public byte[] BuildI2CReset()
+		{
+			var req = PrepareFeatureRequest(ControlReportID);
+			req[1] = I2CReset;
+			return req;
+		}
+
+		public byte[] BuildScanRequest(int i2c_addr)
+			=> new byte[] { I2CWriteRequest, (byte)i2c_addr, (byte)I2CConditions.START_AND_STOP, 1 };
 
 		public byte[] BuildI2CSpeedRequest(uint speed_khz)
-			=> new byte[] { ControlReportID, SetI2CClockSpeed, (byte)(speed_khz >> 8), (byte)(speed_khz & 0xff) };
+		{
+			var speed_request = PrepareFeatureRequest(ControlReportID);
+			speed_request[1] = SetI2CClockSpeed;
+			speed_request[2] = (byte)(speed_khz >> 8);
+			speed_request[3] = (byte)(speed_khz & 0xff);
+			return speed_request;
+		}
 
 		public byte[] BuildI2CStatusRequest() => PrepareFeatureRequest(I2CStatusReportID);
 
