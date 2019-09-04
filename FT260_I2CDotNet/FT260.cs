@@ -13,7 +13,8 @@ namespace FT260_I2CDotNet
 		public const int I2C_AddressMax = 0x7F;
 		public const int I2C_AddressMin = 0;
 
-		internal const int MaxTransactionPyload = 60;
+		internal const int MaxTransactionPyload = 64 - 4 
+			- 1; // (windows raises exception on 60)
 
 		private readonly HidDevice FT260Device;
 		private readonly RequestBuilder RequestBuilder;
