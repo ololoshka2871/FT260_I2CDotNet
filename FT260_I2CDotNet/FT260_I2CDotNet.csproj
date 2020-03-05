@@ -1,11 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFrameworks>net461;netcoreapp2.0</TargetFrameworks>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="HidSharp" Version="2.0.5" />
   </ItemGroup>
-
 </Project>
