@@ -51,6 +51,7 @@ namespace FT260_I2CDotNet
 
 			var scanRequest = RequestBuilder.BuildScanRequest(i2c_addr);
 			Stream.Write(scanRequest);
+			Thread.Sleep(1); // Inside virtual machine needs this dalay
 			I2CStatus status;
 			do
 			{
