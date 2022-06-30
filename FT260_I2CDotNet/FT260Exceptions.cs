@@ -126,4 +126,15 @@ namespace FT260_I2CDotNet
 
 		#endregion Constructors
 	}
+
+	public class Timeout : FT260Exception
+	{
+		#region Constructors
+
+		internal Timeout(TimeoutException ex) : base(ex.Message)
+		{
+		}
+
+		#endregion Constructors
+	}
 }

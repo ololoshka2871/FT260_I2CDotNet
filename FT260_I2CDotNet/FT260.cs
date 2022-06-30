@@ -89,7 +89,16 @@ namespace FT260_I2CDotNet
 					throw new TransactionException(status);
 				}
 
-				var result = Stream.Read();
+				byte[] result;
+				try
+				{
+					result = Stream.Read();
+				}
+				catch (TimeoutException ex)
+				{
+					throw new Timeout(ex);
+				}
+
 				var res_info = Deserialiser.ReportToStructure<I2CInputReportInfo>(result);
 				if (res_info.length == this_transaction_size)
 				{
