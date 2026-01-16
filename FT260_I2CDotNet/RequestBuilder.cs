@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace FT260_I2CDotNet
 {
@@ -11,6 +12,8 @@ namespace FT260_I2CDotNet
 
 		private const byte I2CReadRequest = 0xC2;
 		private const byte I2CWriteRequest = 0xD0;
+
+		private const byte GPIORequest = 0xB0;
 
 		#endregion ReportIDs
 
@@ -117,6 +120,90 @@ namespace FT260_I2CDotNet
 			return report;
 		}
 
-		#endregion Methods
-	}
+		public byte[] BuildSetupGPIOFunction(GPIOState pin)
+		{
+            var report = PrepareFeatureRequest(ControlReportID);
+
+			var as_gpio = pin.State != PinState.DEFAULT;
+
+            switch (pin.Id)
+			{
+				case PinID.DIO0_GPIOA:
+					report[1] = GPIOAFunction;
+					report[2] = as_gpio ? (byte)0 : (byte)3;
+                    break;
+                case PinID.DIO1_GPIOB:
+                case PinID.DIO2_GPIOE:
+                case PinID.DIO9_GPIOF:
+                case PinID.DIO13_GPIOH:
+                    report[1] = SetUARTMode;
+					report[2] = as_gpio ? (byte)0 : (byte)4;
+                    break;
+                case PinID.DIO7_GPIO2:
+					report[1] = GPIO2Function;
+					report[2] = as_gpio ? (byte)0 : (byte)1;
+                    break;
+                case PinID.DIO8_GPIO3:
+					report[1] = EnableInterruptWakeUp;
+					report[2] = as_gpio ? (byte)0 : (byte)4;
+                    break;
+                case PinID.DIO10_GPIO4:
+                case PinID.DIO11_GPIO5:
+                    report[1] = EnableUARTDCDRI;
+                    report[2] = as_gpio ? (byte)0 : (byte)1;
+                    break;
+                case PinID.DIO12_GPIOG:
+					report[1] = GPIOGFunction;
+					report[2] = as_gpio ? (byte)0 : (byte)6;
+					break;
+            }
+
+			return report;
+		}
+
+		public byte[] BuildReadGPIO() => PrepareFeatureRequest(GPIORequest);
+
+        public byte[] BuildWriteGPIO(byte[] state, IEnumerable<GPIOWriteState> pins)
+		{
+			if (state[0] != GPIORequest)
+			{
+				throw new GPIOException($"Incorrect prev GPIO state, {state[0]} != {GPIORequest}");
+            }
+
+			unsafe {
+                //fixed (byte* gpio_05_vals = &state[1], byte* gpio_05_dirs = &state[2], byte* gpio_ah_vals = &state[3], byte* gpio_ah_dirs = &state[4]) 
+                fixed (byte* start = &state[1]) 
+                {
+					foreach (var pin in pins)
+					{
+						var mask = pin.Id.ToMask();
+						var v = pin.Id.IsExtension() ? start + 2 : start;
+						var dir = pin.Id.IsExtension() ? start + 3 : start + 1;
+
+						if (pin.State == PinState.OUTPUT)
+						{
+							*dir |= mask;
+						}
+						else
+						{
+							*dir &= (byte)~mask;
+						}
+
+						if (pin.Value)
+						{
+							*v |= mask;
+						}
+						else
+						{
+							*v &= (byte)~mask;
+						}
+					}
+				}
+			}
+
+            return state;
+        }
+
+        #endregion Methods
+    }
 }

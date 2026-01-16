@@ -1,5 +1,7 @@
 ﻿using HidSharp;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace FT260_I2CDotNet
@@ -272,11 +274,63 @@ namespace FT260_I2CDotNet
 			};
 		}
 
-		#endregion Methods
+		// GPIO control
 
-		#region Constructors
+		public void InitGPIO(IEnumerable<GPIOWriteState> pins)
+		{
+			foreach (var pin in pins)
+			{
+				var setup_request = RequestBuilder.BuildSetupGPIOFunction(pin);
+                Stream.SetFeature(setup_request);
+            }
 
-		public FT260(HidDevice device)
+            WriteGPIO(pins);
+        }
+
+		public List<GPIOReadState> ReadGPIO(IEnumerable<PinID> pins)
+		{
+            var read_request = RequestBuilder.BuildReadGPIO();
+            Stream.GetFeature(read_request);
+
+			var result = new List<GPIOReadState>();
+
+            unsafe
+			{
+				//fixed (byte* gpio_05_vals = &state[1], byte* gpio_05_dirs = &state[2], byte* gpio_ah_vals = &state[3], byte* gpio_ah_dirs = &state[4]) 
+				fixed (byte* start = &read_request[1])
+				{
+					foreach (var pin in pins)
+					{
+						var mask = pin.ToMask();
+						var v = pin.IsExtension() ? start + 2 : start;
+						var dir = pin.IsExtension() ? start + 3 : start + 1;
+
+						result.Add(new GPIOReadState() { 
+							Id = pin, 
+							State = (*dir & mask) != 0 ? PinState.OUTPUT : PinState.INPUT, 
+							Value = (*v & mask) != 0 
+						});
+					}
+				}
+			}
+            
+            return result;
+		}
+
+		public void WriteGPIO(IEnumerable<GPIOWriteState> pins)
+		{
+            var read_request = RequestBuilder.BuildReadGPIO();
+            Stream.GetFeature(read_request);
+
+            var direction_request = RequestBuilder.BuildWriteGPIO(read_request, pins);
+            Stream.SetFeature(direction_request);
+        }
+
+        #endregion Methods
+
+        #region Constructors
+
+        public FT260(HidDevice device)
 		{
 			FT260Device = device;
 			RequestBuilder = new RequestBuilder()

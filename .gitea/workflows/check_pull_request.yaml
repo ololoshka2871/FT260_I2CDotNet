@@ -1,0 +1,31 @@
+name: Pull Request Check
+
+on:
+  pull_request:
+    types: ['opened', 'edited', 'reopened', 'synchronize']
+    branches:
+      - master
+      - '*/*'
+
+env:
+   GIT_SSL_NO_VERIFY: true
+   NODE_TLS_REJECT_UNAUTHORIZED: 0
+
+jobs:
+  test-windows:
+    runs-on: windows-net-framework4.6
+    steps:
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v2
+                  
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Check Build
+        env:
+          DOTNET_CLI_UI_LANGUAGE: en
+        run: |
+          chcp 437
+          msbuild -property:Configuration=Release -t:restore,build -p:RestorePackagesConfig=true
