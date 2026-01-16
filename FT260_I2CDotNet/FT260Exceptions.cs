@@ -142,7 +142,7 @@ namespace FT260_I2CDotNet
 	{
         #region Constructors
 
-        internal GPIOException(string message) : base(message) { }
+        public GPIOException(string message) : base(message) { }
 
         #endregion Constructors
     }
